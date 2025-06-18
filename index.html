@@ -12,32 +12,59 @@
       padding: 1rem;
       color: #333;
     }
-    h1, h2 {
+    h1, h2, h3 {
       text-align: center;
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid #4CAF50;
+      padding-bottom: 0.5rem;
+      letter-spacing: 0.5px;
+      font-weight: 700;
     }
-    .section { display: none; max-width: 650px; margin: auto; }
-    .visible { display: block; }
+    .section {
+      display: none;
+      max-width: 650px;
+      margin: 2rem auto;
+      padding: 1.5rem;
+      background-color: #fff;
+      border-radius: 16px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.05);
+    }
+    .visible {
+      display: block;
+    }
     button {
       width: 100%;
-      padding: 1rem;
+      padding: 0.9rem 1.2rem;
       margin: 0.5rem 0;
       background-color: #4CAF50;
       color: white;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
+      font-weight: bold;
       cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    button:hover {
+      background-color: #45a049;
     }
     button.secondary {
       background-color: #888;
     }
     input, textarea, select {
       width: 100%;
-      padding: 0.7rem;
-      margin: 0.3rem 0;
+      padding: 0.75rem;
+      margin: 0.4rem 0 1.2rem;
       font-size: 1rem;
       border: 1px solid #ccc;
-      border-radius: 6px;
+      border-radius: 10px;
+      background-color: #fdfdfd;
+      transition: border 0.2s ease;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: #4CAF50;
+      outline: none;
     }
     .series-entry {
       display: flex;
@@ -47,15 +74,33 @@
     .exercise-block {
       border: 1px solid #ccc;
       padding: 1rem;
-      margin-bottom: 1rem;
-      border-radius: 8px;
-      background-color: #fff;
+      margin-bottom: 2rem;
+      border-radius: 12px;
+      background-color: #fafafa;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
     .note {
       font-size: 0.85rem;
       color: #666;
       margin-bottom: 0.5rem;
     }
+    .chrono {
+      font-size: 1.5rem;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 0.5rem;
+      color: #222;
+    }
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+    .button-group button {
+      flex: 1;
+    }
+  
   </style>
 </head>
 <body>
@@ -84,8 +129,14 @@
     <label>Notas:</label>
     <textarea id="notesInput" placeholder="Notas del entreno..."></textarea>
     <div id="exerciseList"></div>
+
+    <h3>🕒 Cronómetro</h3>
+    <div class="chrono"><span id="chrono">00:00</span></div>
+    <button onclick="toggleTimer()">▶️ Iniciar / Pausar</button>
+    <button class="secondary" onclick="resetTimer()">⏹ Reiniciar</button>
+
     <button onclick="addExercise()">➕ Añadir Ejercicio</button>
-    <button onclick="saveWorkout()">💾 Guardar Entreno</button>
+    <button onclick="saveWorkout()">📅 Guardar Entreno</button>
     <button class="secondary" onclick="showSection('home')">🏠 Volver</button>
   </div>
 
@@ -456,6 +507,33 @@ function showStats() {
   document.getElementById('statsContainer').innerHTML = statsHtml;
 }
 
+let timer = null;
+let seconds = 0;
+
+function toggleTimer() {
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  } else {
+    timer = setInterval(() => {
+      seconds++;
+      document.getElementById('chrono').textContent = formatTime(seconds);
+    }, 1000);
+  }
+}
+
+function resetTimer() {
+  clearInterval(timer);
+  timer = null;
+  seconds = 0;
+  document.getElementById('chrono').textContent = '00:00';
+}
+
+function formatTime(s) {
+  const m = String(Math.floor(s / 60)).padStart(2, '0');
+  const sec = String(s % 60).padStart(2, '0');
+  return `${m}:${sec}`;
+}
 
 </script>
 </body>
