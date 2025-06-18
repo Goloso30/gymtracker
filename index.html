@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🏋️ GymTracker Web</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f3f3f3;
+      margin: 0;
+      padding: 1rem;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.2rem;
+      margin-bottom: 1rem;
+    }
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .section { display: none; max-width: 650px; margin: auto; }
+    .visible { display: block; }
+
+    button {
+      width: 100%;
+      padding: 1rem;
+      margin: 0.5rem 0;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    button.secondary {
+      background-color: #888;
+    }
+    button.secondary:hover {
+      background-color: #777;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 0.8rem;
+      margin: 0.4rem 0;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .series-entry {
+      border: 1px solid #ddd;
+      padding: 0.7rem;
+      margin-bottom: 0.5rem;
+      border-radius: 8px;
+      background-color: #fafafa;
+    }
+    .exercise-block {
+      border: 2px solid #4CAF50;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 12px;
+      background-color: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .routine-card, .history-card {
+      border: 1px solid #ccc;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 12px;
+      background-color: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .routine-card strong, .history-card strong {
+      font-size: 1.1rem;
+    }
+    ul { padding-left: 1.2rem; margin: 0.5rem 0; }
+    hr { margin: 2rem 0; }
+    .small-btn {
+      font-size: 0.9rem;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .chrono {
+      font-size: 1.8rem;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏋️ GymTracker Web</h1>
+
+  <div class="section visible" id="home">
+    <button onclick="showSection('new')">➕ Nuevo Entreno</button>
+    <button onclick="showSection('history')">📋 Ver Historial</button>
+    <button onclick="showSection('routines')">🗂 Rutinas</button>
+  </div>
+
+  <div class="section" id="new">
+    <h2>➕ Nuevo Entreno</h2>
+    <label>Fecha:</label>
+    <input type="datetime-local" id="dateInput">
+
+    <label>Rutina:</label>
+    <select id="routineSelector" onchange="applySelectedRoutine()">
+      <option value="">Sin rutina</option>
+    </select>
+
+    <label>Notas:</label>
+    <textarea id="notesInput" placeholder="Notas del entreno..."></textarea>
+
+    <h3>Ejercicios</h3>
+    <div id="exerciseList"></div>
+    <button onclick="addExercise()">➕ Añadir Ejercicio Libre</button>
+
+    <h3>🕒 Cronómetro</h3>
+    <div class="chrono"><span id="chrono">00:00</span></div>
+    <button onclick="toggleTimer()">▶️ Iniciar / Pausar</button>
+    <button class="secondary" onclick="resetTimer()">⏹ Reiniciar</button>
+
+    <button onclick="saveWorkout()">💾 Guardar Entreno</button>
+    <button class="secondary" onclick="showSection('home')">🏠 Volver</button>
+  </div>
+
+  <div class="section" id="history">
+    <h2>📋 Historial</h2>
+    <label>Filtrar por fecha:</label>
+    <input type="date" id="filterDate" onchange="loadHistory()">
+    <div id="historyList"></div>
+    <button class="secondary" onclick="clearHistory()">🗑 Borrar Todo</button>
+    <button class="secondary" onclick="showSection('home')">🏠 Volver</button>
+  </div>
+
+  <div class="section" id="routines">
+    <h2>🗂 Rutinas</h2>
+
+    <h3>Crear nueva rutina</h3>
+    <label>Nombre de rutina:</label>
+    <input type="text" id="routineNameInput">
+
+    <label>Ejercicios:</label>
+    <div id="routineExercisesList"></div>
+    <button onclick="addRoutineExercise()">➕ Añadir Ejercicio</button>
+
+    <button onclick="saveRoutine()">💾 Guardar Rutina</button>
+
+    <hr>
+
+    <h3>Rutinas guardadas</h3>
+    <div id="routineList"></div>
+
+    <button class="secondary" onclick="showSection('home')">🏠 Volver</button>
+  </div>
+
+  <script>
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+      document.getElementById(id).classList.add('visible');
+      if (id === 'history') loadHistory();
+      if (id === 'routines') loadRoutines();
+    }
+
+    function addExercise(name = '') {
+      const div = document.createElement('div');
+      div.className = 'exercise-block';
+      div.innerHTML = `
+        <label>Nombre del ejercicio:</label>
+        <input type="text" class="exerciseName" value="${name}">
+        <div class="seriesList"></div>
+        <button class="small-btn" onclick="addSerie(this)">➕ Añadir Serie</button>
+        <button class="small-btn" onclick="this.parentElement.remove()" style="background-color:#e74c3c;">❌ Eliminar Ejercicio</button>
+      `;
+      document.getElementById('exerciseList').appendChild(div);
+    }
+
+    function addSerie(btn) {
+      const div = document.createElement('div');
+      div.className = 'series-entry';
+      div.innerHTML = `
+        <label>Reps:</label><input type="number" class="reps" />
+        <label>Peso (kg):</label><input type="number" class="weight" />
+        <button class="small-btn" onclick="this.parentElement.remove()" style="background-color:#e74c3c;">❌ Eliminar Serie</button>
+      `;
+      btn.previousElementSibling.appendChild(div);
+    }
+
+    let timer = null, seconds = 0;
+    function toggleTimer() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      } else {
+        timer = setInterval(() => {
+          seconds++;
+          document.getElementById('chrono').textContent = formatTime(seconds);
+        }, 1000);
+      }
+    }
+    function resetTimer() {
+      clearInterval(timer);
+      timer = null;
+      seconds = 0;
+      document.getElementById('chrono').textContent = '00:00';
+    }
+    function formatTime(s) {
+      const m = String(Math.floor(s / 60)).padStart(2, '0');
+      const sec = String(s % 60).padStart(2, '0');
+      return `${m}:${sec}`;
+    }
+
+    function saveWorkout() {
+      const date = document.getElementById('dateInput').value;
+      const notes = document.getElementById('notesInput').value;
+      const exercises = [];
+      document.querySelectorAll('.exercise-block').forEach(exBlock => {
+        const name = exBlock.querySelector('.exerciseName').value;
+        const reps = exBlock.querySelectorAll('.reps');
+        const weights = exBlock.querySelectorAll('.weight');
+        const series = Array.from(reps).map((r, i) => ({
+          reps: r.value,
+          weight: weights[i].value
+        }));
+        exercises.push({ name, series });
+      });
+      const workout = { date, notes, exercises };
+      const history = JSON.parse(localStorage.getItem('history') || '[]');
+      history.push(workout);
+      localStorage.setItem('history', JSON.stringify(history));
+
+      document.getElementById('dateInput').value = '';
+      document.getElementById('notesInput').value = '';
+      document.getElementById('exerciseList').innerHTML = '';
+      document.getElementById('routineSelector').value = '';
+      resetTimer();
+      alert('Entreno guardado');
+      showSection('home');
+    }
+
+    function loadHistory() {
+      const history = JSON.parse(localStorage.getItem('history') || '[]');
+      const filter = document.getElementById('filterDate').value;
+      const list = document.getElementById('historyList');
+      list.innerHTML = '';
+      const items = history.filter(h => !filter || h.date.startsWith(filter));
+      items.reverse().forEach(w => {
+        const div = document.createElement('div');
+        div.className = 'history-card';
+        div.innerHTML = `
+          <em>${w.date}</em><br>
+          ${w.notes ? `<p>📝 ${w.notes}</p>` : ''}
+          ${w.exercises.map(ex => `
+            <strong>${ex.name}</strong>
+            <ul>${ex.series.map(s => `<li>${s.reps} reps x ${s.weight} kg</li>`).join('')}</ul>
+          `).join('')}
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function clearHistory() {
+      if (confirm('¿Seguro que quieres borrar todo?')) {
+        localStorage.removeItem('history');
+        loadHistory();
+      }
+    }
+
+    function addRoutineExercise() {
+      const div = document.createElement('div');
+      div.className = 'series-entry';
+      div.innerHTML = `
+        <input type="text" placeholder="Nombre del ejercicio" class="routineExerciseInput">
+        <button class="small-btn" onclick="this.parentElement.remove()" style="background-color:#e74c3c;">❌ Eliminar</button>
+      `;
+      document.getElementById('routineExercisesList').appendChild(div);
+    }
+
+    function saveRoutine() {
+      const name = document.getElementById('routineNameInput').value.trim();
+      const exerciseInputs = document.querySelectorAll('.routineExerciseInput');
+      const exercises = Array.from(exerciseInputs).map(input => input.value.trim()).filter(e => e);
+
+      if (!name || exercises.length === 0) {
+        alert('Completa el nombre y añade al menos un ejercicio');
+        return;
+      }
+
+      const routines = JSON.parse(localStorage.getItem('routines') || '[]');
+      routines.push({ name, exercises });
+      localStorage.setItem('routines', JSON.stringify(routines));
+
+      document.getElementById('routineNameInput').value = '';
+      document.getElementById('routineExercisesList').innerHTML = '';
+      alert('Rutina guardada');
+      loadRoutines();
+    }
+
+    function loadRoutines() {
+      const routines = JSON.parse(localStorage.getItem('routines') || '[]');
+      const list = document.getElementById('routineList');
+      list.innerHTML = '';
+      routines.forEach((r, index) => {
+        const div = document.createElement('div');
+        div.className = 'routine-card';
+        div.innerHTML = `
+          <strong>${r.name}</strong><br>
+          <ul>${r.exercises.map(e => `<li>${e}</li>`).join('')}</ul>
+          <button class="small-btn" onclick="deleteRoutine(${index})" style="background-color:#e74c3c;">🗑 Eliminar</button>
+        `;
+        list.appendChild(div);
+      });
+
+      updateRoutineSelector();
+    }
+
+    function deleteRoutine(index) {
+      const routines = JSON.parse(localStorage.getItem('routines') || '[]');
+      if (confirm(`¿Eliminar rutina "${routines[index].name}"?`)) {
+        routines.splice(index, 1);
+        localStorage.setItem('routines', JSON.stringify(routines));
+        loadRoutines();
+      }
+    }
+
+    function updateRoutineSelector() {
+      const routines = JSON.parse(localStorage.getItem('routines') || '[]');
+      const selector = document.getElementById('routineSelector');
+      selector.innerHTML = '<option value="">Sin rutina</option>';
+      routines.forEach((r, i) => {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = r.name;
+        selector.appendChild(option);
+      });
+    }
+
+    function applySelectedRoutine() {
+      const routines = JSON.parse(localStorage.getItem('routines') || '[]');
+      const index = document.getElementById('routineSelector').value;
+      const exerciseList = document.getElementById('exerciseList');
+      exerciseList.innerHTML = '';
+
+      if (index === '') return;
+
+      const routine = routines[index];
+      routine.exercises.forEach(exName => {
+        addExercise(exName);
+      });
+    }
+
+    // Carga inicial de rutinas al abrir app
+    loadRoutines();
+  </script>
+</body>
+</html>
