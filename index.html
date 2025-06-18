@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🏋️ GymTracker Web</title>
   <style>
     body {
@@ -12,19 +12,11 @@
       padding: 1rem;
       color: #333;
     }
-    h1 {
-      text-align: center;
-      font-size: 2.2rem;
-      margin-bottom: 1rem;
-    }
-    h2 {
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
+    h1, h2 {
       text-align: center;
     }
     .section { display: none; max-width: 650px; margin: auto; }
     .visible { display: block; }
-
     button {
       width: 100%;
       padding: 1rem;
@@ -33,64 +25,35 @@
       color: white;
       font-size: 1.1rem;
       border: none;
-      border-radius: 10px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-    button:hover {
-      background-color: #45a049;
     }
     button.secondary {
       background-color: #888;
     }
-    button.secondary:hover {
-      background-color: #777;
-    }
     input, textarea, select {
       width: 100%;
-      padding: 0.8rem;
-      margin: 0.4rem 0;
+      padding: 0.7rem;
+      margin: 0.3rem 0;
       font-size: 1rem;
       border: 1px solid #ccc;
-      border-radius: 8px;
+      border-radius: 6px;
     }
     .series-entry {
-      border: 1px solid #ddd;
-      padding: 0.7rem;
-      margin-bottom: 0.5rem;
-      border-radius: 8px;
-      background-color: #fafafa;
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.5rem;
     }
     .exercise-block {
-      border: 2px solid #4CAF50;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      border-radius: 12px;
-      background-color: #fff;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    }
-    .routine-card, .history-card {
       border: 1px solid #ccc;
       padding: 1rem;
       margin-bottom: 1rem;
-      border-radius: 12px;
+      border-radius: 8px;
       background-color: #fff;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
-    .routine-card strong, .history-card strong {
-      font-size: 1.1rem;
-    }
-    ul { padding-left: 1.2rem; margin: 0.5rem 0; }
-    hr { margin: 2rem 0; }
-    .small-btn {
-      font-size: 0.9rem;
-      padding: 0.5rem;
-      margin-top: 0.5rem;
-    }
-    .chrono {
-      font-size: 1.8rem;
-      font-weight: bold;
-      text-align: center;
+    .note {
+      font-size: 0.85rem;
+      color: #666;
       margin-bottom: 0.5rem;
     }
   </style>
@@ -99,134 +62,173 @@
   <h1>🏋️ GymTracker Web</h1>
 
   <div class="section visible" id="home">
+    <select id="routineSelector" onchange="setRoutineDay(this.value)">
+      <option value="">📅 Seleccionar rutina semanal</option>
+    </select>
     <button onclick="showSection('new')">➕ Nuevo Entreno</button>
+    <button onclick="repeatLastWorkout()">🔁 Repetir último</button>
+    <button onclick="showSection('routines')">🗂 Gestionar Rutinas (editar o eliminar)</button>
     <button onclick="showSection('history')">📋 Ver Historial</button>
-    <button onclick="showSection('routines')">🗂 Rutinas</button>
+    <button onclick="exportData()">📤 Exportar Datos</button>
+    <label style="display:block; margin-top: 0.5rem; cursor: pointer;">
+      📥 Importar Datos
+      <input type="file" accept="application/json" onchange="importData(event)" style="display: none;">
+    </label>
+  </div>
+    
+  </div>
   </div>
 
   <div class="section" id="new">
-    <h2>➕ Nuevo Entreno</h2>
-    <label>Fecha:</label>
-    <input type="datetime-local" id="dateInput">
-
-    <label>Rutina:</label>
-    <select id="routineSelector" onchange="applySelectedRoutine()">
-      <option value="">Sin rutina</option>
-    </select>
-
+    <h3 id="currentDate"></h3>
     <label>Notas:</label>
     <textarea id="notesInput" placeholder="Notas del entreno..."></textarea>
-
-    <h3>Ejercicios</h3>
     <div id="exerciseList"></div>
-    <button onclick="addExercise()">➕ Añadir Ejercicio Libre</button>
-
-    <h3>🕒 Cronómetro</h3>
-    <div class="chrono"><span id="chrono">00:00</span></div>
-    <button onclick="toggleTimer()">▶️ Iniciar / Pausar</button>
-    <button class="secondary" onclick="resetTimer()">⏹ Reiniciar</button>
-
+    <button onclick="addExercise()">➕ Añadir Ejercicio</button>
     <button onclick="saveWorkout()">💾 Guardar Entreno</button>
+    <button class="secondary" onclick="showSection('home')">🏠 Volver</button>
+  </div>
+
+  <div class="section" id="routines">
+    <h2>🗂 Rutinas Semanales</h2>
+    <label>Nombre de rutina:</label>
+    <input type="text" id="routineName">
+    <label>Ejercicios:</label>
+    <div id="routineExercisesList"></div>
+    <button onclick="addRoutineExercise()">➕ Añadir Ejercicio</button>
+    <button onclick="saveRoutine()">💾 Guardar Rutina</button>
+    <hr>
+    <div id="savedRoutinesList"></div>
     <button class="secondary" onclick="showSection('home')">🏠 Volver</button>
   </div>
 
   <div class="section" id="history">
     <h2>📋 Historial</h2>
-    <label>Filtrar por fecha:</label>
-    <input type="date" id="filterDate" onchange="loadHistory()">
+
+    <label for="monthFilter">🗓 Filtrar por mes:</label>
+    <input type="month" id="monthFilter" onchange="loadHistory()">
+
+    <label for="weekFilter">📆 Filtrar por semana (selecciona una fecha):</label>
+    <input type="date" id="weekFilter" onchange="loadHistory()">
+
+    <button onclick="showStats()">📊 Ver Estadísticas</button>
+    <div id="statsContainer"></div>
+
     <div id="historyList"></div>
-    <button class="secondary" onclick="clearHistory()">🗑 Borrar Todo</button>
+    <button onclick="clearHistory()">🗑 Borrar Todo</button>
     <button class="secondary" onclick="showSection('home')">🏠 Volver</button>
   </div>
 
-  <div class="section" id="routines">
-    <h2>🗂 Rutinas</h2>
-
-    <h3>Crear nueva rutina</h3>
-    <label>Nombre de rutina:</label>
-    <input type="text" id="routineNameInput">
-
-    <label>Ejercicios:</label>
-    <div id="routineExercisesList"></div>
-    <button onclick="addRoutineExercise()">➕ Añadir Ejercicio</button>
-
-    <button onclick="saveRoutine()">💾 Guardar Rutina</button>
-
-    <hr>
-
-    <h3>Rutinas guardadas</h3>
-    <div id="routineList"></div>
-
-    <button class="secondary" onclick="showSection('home')">🏠 Volver</button>
-  </div>
 
   <script>
+    let editingRoutineIndex = null;
     function showSection(id) {
       document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
       document.getElementById(id).classList.add('visible');
+      if (id === 'new') {
+        document.getElementById('currentDate').innerText = new Date().toLocaleString();
+      }
       if (id === 'history') loadHistory();
-      if (id === 'routines') loadRoutines();
+      if (id === 'routines') loadSavedRoutines();
+    }
+
+    function setRoutineDay(index) {
+      const routines = JSON.parse(localStorage.getItem('routines') || '[]');
+      const routine = routines[index];
+      if (!routine) return;
+      showSection('new');
+      const history = JSON.parse(localStorage.getItem('history') || '[]').reverse();
+      const lastMatch = history.find(h => h.exercises.some(e => routine.exercises.includes(e.name)));
+      document.getElementById('exerciseList').innerHTML = '';
+      routine.exercises.forEach(exName => {
+        addExercise(exName);
+        const block = document.getElementById('exerciseList').lastElementChild;
+        if (lastMatch) {
+          const found = lastMatch.exercises.find(e => e.name === exName);
+          if (found) {
+            found.series.forEach(s => {
+              const btn = block.querySelector('button');
+              addSerie(btn);
+              const serie = block.querySelector('.seriesList').lastElementChild;
+              serie.querySelector('.reps').value = s.reps;
+              serie.querySelector('.weight').value = s.weight;
+            });
+          }
+        }
+      });
     }
 
     function addExercise(name = '') {
+      const id = 'note_' + Math.random().toString(36).substring(2, 9);
       const div = document.createElement('div');
       div.className = 'exercise-block';
       div.innerHTML = `
-        <label>Nombre del ejercicio:</label>
-        <input type="text" class="exerciseName" value="${name}">
+        <input type="text" placeholder="Nombre del ejercicio" class="exerciseName" value="${name}" oninput="showLastInfo(this, '${id}')">
+        <div class="note" id="${id}"></div>
         <div class="seriesList"></div>
-        <button class="small-btn" onclick="addSerie(this)">➕ Añadir Serie</button>
-        <button class="small-btn" onclick="this.parentElement.remove()" style="background-color:#e74c3c;">❌ Eliminar Ejercicio</button>
+        <button onclick="addSerie(this)">➕ Añadir Serie</button>
+        <button onclick="this.parentElement.remove()" style="background-color:#e74c3c;margin-top:0.5rem;">❌ Eliminar Ejercicio</button>
       `;
       document.getElementById('exerciseList').appendChild(div);
+      if (name) showLastInfo(div.querySelector('.exerciseName'), id);
     }
 
     function addSerie(btn) {
       const div = document.createElement('div');
       div.className = 'series-entry';
       div.innerHTML = `
-        <label>Reps:</label><input type="number" class="reps" />
-        <label>Peso (kg):</label><input type="number" class="weight" />
-        <button class="small-btn" onclick="this.parentElement.remove()" style="background-color:#e74c3c;">❌ Eliminar Serie</button>
+        <input type="number" placeholder="Reps" class="reps" />
+        <input type="number" placeholder="Peso (kg)" class="weight" />
       `;
       btn.previousElementSibling.appendChild(div);
     }
 
-    let timer = null, seconds = 0;
-    function toggleTimer() {
-      if (timer) {
-        clearInterval(timer);
-        timer = null;
-      } else {
-        timer = setInterval(() => {
-          seconds++;
-          document.getElementById('chrono').textContent = formatTime(seconds);
-        }, 1000);
+    function showLastInfo(input, targetId) {
+  const name = input.value.trim().toLowerCase();
+  const history = JSON.parse(localStorage.getItem('history') || '[]').reverse();
+  const div = document.getElementById(targetId);
+  for (const w of history) {
+    const match = w.exercises.find(e => e.name.trim().toLowerCase() === name);
+    if (match) {
+      const reps = match.series.map(s => `${s.reps}x${s.weight}kg`).join(', ');
+      let improvementNote = '';
+      const block = input.closest('.exercise-block');
+      if (block) {
+        const currReps = block.querySelectorAll('.reps');
+        const currWeight = block.querySelectorAll('.weight');
+        if (currReps.length && currWeight.length) {
+          const last = match.series[match.series.length - 1];
+          const current = {
+            reps: parseInt(currReps[currReps.length - 1].value) || 0,
+            weight: parseFloat(currWeight[currWeight.length - 1].value) || 0
+          };
+          const lastWeight = parseFloat(last.weight);
+          const lastReps = parseInt(last.reps);
+          if (!isNaN(current.weight) && current.weight > lastWeight) {
+            improvementNote = `📈 +${current.weight - lastWeight}kg respecto a la última vez`;
+          } else if (!isNaN(current.reps) && current.reps > lastReps) {
+            improvementNote = `📈 +${current.reps - lastReps} reps respecto a la última vez`;
+          }
+        }
       }
+      div.innerText = `📌 Última vez: ${reps} (${new Date(w.date).toLocaleDateString()})` + (improvementNote ? `
+${improvementNote}` : '');
+      return;
     }
-    function resetTimer() {
-      clearInterval(timer);
-      timer = null;
-      seconds = 0;
-      document.getElementById('chrono').textContent = '00:00';
-    }
-    function formatTime(s) {
-      const m = String(Math.floor(s / 60)).padStart(2, '0');
-      const sec = String(s % 60).padStart(2, '0');
-      return `${m}:${sec}`;
+  }
+  div.innerText = "";
     }
 
     function saveWorkout() {
-      const date = document.getElementById('dateInput').value;
       const notes = document.getElementById('notesInput').value;
+      const date = new Date().toISOString();
       const exercises = [];
       document.querySelectorAll('.exercise-block').forEach(exBlock => {
         const name = exBlock.querySelector('.exerciseName').value;
         const reps = exBlock.querySelectorAll('.reps');
         const weights = exBlock.querySelectorAll('.weight');
         const series = Array.from(reps).map((r, i) => ({
-          reps: r.value,
-          weight: weights[i].value
+          reps: r.value, weight: weights[i].value
         }));
         exercises.push({ name, series });
       });
@@ -234,28 +236,61 @@
       const history = JSON.parse(localStorage.getItem('history') || '[]');
       history.push(workout);
       localStorage.setItem('history', JSON.stringify(history));
-
-      document.getElementById('dateInput').value = '';
-      document.getElementById('notesInput').value = '';
-      document.getElementById('exerciseList').innerHTML = '';
-      document.getElementById('routineSelector').value = '';
-      resetTimer();
-      alert('Entreno guardado');
+      alert("Entreno guardado");
       showSection('home');
+    }
+
+    function repeatLastWorkout() {
+      const history = JSON.parse(localStorage.getItem('history') || '[]');
+      if (!history.length) return alert("No hay entrenos anteriores");
+      const last = history[history.length - 1];
+      showSection('new');
+      document.getElementById('notesInput').value = last.notes || '';
+      const container = document.getElementById('exerciseList');
+      container.innerHTML = '';
+      last.exercises.forEach(ex => {
+        addExercise(ex.name);
+        const block = container.lastElementChild.querySelector('.seriesList');
+        ex.series.forEach(s => {
+          const btn = container.lastElementChild.querySelector('button');
+          addSerie(btn);
+          const lastSerie = block.lastElementChild;
+          lastSerie.querySelector('.reps').value = s.reps;
+          lastSerie.querySelector('.weight').value = s.weight;
+        });
+      });
     }
 
     function loadHistory() {
       const history = JSON.parse(localStorage.getItem('history') || '[]');
-      const filter = document.getElementById('filterDate').value;
       const list = document.getElementById('historyList');
+      const monthFilter = document.getElementById('monthFilter')?.value;
+      const weekFilter = document.getElementById('weekFilter')?.value;
       list.innerHTML = '';
-      const items = history.filter(h => !filter || h.date.startsWith(filter));
-      items.reverse().forEach(w => {
+
+      let filtered = history;
+
+      if (monthFilter) {
+        filtered = filtered.filter(w => w.date.startsWith(monthFilter));
+      } else if (weekFilter) {
+        const start = new Date(weekFilter);
+        const end = new Date(start);
+        end.setDate(end.getDate() + 6);
+
+        filtered = filtered.filter(w => {
+          const workoutDate = new Date(w.date);
+          return workoutDate >= start && workoutDate <= end;
+        });
+      }
+
+      filtered.reverse().forEach(w => {
         const div = document.createElement('div');
-        div.className = 'history-card';
+        div.style.border = '1px solid #ccc';
+        div.style.padding = '1rem';
+        div.style.marginBottom = '1rem';
         div.innerHTML = `
-          <em>${w.date}</em><br>
-          ${w.notes ? `<p>📝 ${w.notes}</p>` : ''}
+          <em>${new Date(w.date).toLocaleDateString()}</em><br>
+          <p>${w.notes || ''}</p>
           ${w.exercises.map(ex => `
             <strong>${ex.name}</strong>
             <ul>${ex.series.map(s => `<li>${s.reps} reps x ${s.weight} kg</li>`).join('')}</ul>
@@ -265,8 +300,10 @@
       });
     }
 
+
+
     function clearHistory() {
-      if (confirm('¿Seguro que quieres borrar todo?')) {
+      if (confirm("¿Borrar todo el historial?")) {
         localStorage.removeItem('history');
         loadHistory();
       }
@@ -274,89 +311,152 @@
 
     function addRoutineExercise() {
       const div = document.createElement('div');
-      div.className = 'series-entry';
-      div.innerHTML = `
-        <input type="text" placeholder="Nombre del ejercicio" class="routineExerciseInput">
-        <button class="small-btn" onclick="this.parentElement.remove()" style="background-color:#e74c3c;">❌ Eliminar</button>
-      `;
+      div.innerHTML = '<input type="text" class="routineExerciseInput" placeholder="Nombre del ejercicio">';
       document.getElementById('routineExercisesList').appendChild(div);
     }
 
     function saveRoutine() {
-      const name = document.getElementById('routineNameInput').value.trim();
-      const exerciseInputs = document.querySelectorAll('.routineExerciseInput');
-      const exercises = Array.from(exerciseInputs).map(input => input.value.trim()).filter(e => e);
-
-      if (!name || exercises.length === 0) {
-        alert('Completa el nombre y añade al menos un ejercicio');
-        return;
-      }
-
+      const name = document.getElementById('routineName').value.trim();
+      const inputs = document.querySelectorAll('.routineExerciseInput');
+      const exercises = Array.from(inputs).map(i => i.value.trim()).filter(e => e);
+      if (!name || !exercises.length) return alert("Completa nombre y al menos un ejercicio.");
       const routines = JSON.parse(localStorage.getItem('routines') || '[]');
-      routines.push({ name, exercises });
+      if (editingRoutineIndex !== null) {
+        routines[editingRoutineIndex] = { name, exercises };
+        editingRoutineIndex = null;
+      } else {
+        routines.push({ name, exercises });
+      }
       localStorage.setItem('routines', JSON.stringify(routines));
-
-      document.getElementById('routineNameInput').value = '';
+      document.getElementById('routineName').value = '';
       document.getElementById('routineExercisesList').innerHTML = '';
-      alert('Rutina guardada');
-      loadRoutines();
+      loadSavedRoutines();
+      updateRoutineSelector();
     }
 
-    function loadRoutines() {
+    function loadSavedRoutines() {
       const routines = JSON.parse(localStorage.getItem('routines') || '[]');
-      const list = document.getElementById('routineList');
+      const list = document.getElementById('savedRoutinesList');
       list.innerHTML = '';
-      routines.forEach((r, index) => {
+      routines.forEach((r, i) => {
         const div = document.createElement('div');
-        div.className = 'routine-card';
         div.innerHTML = `
-          <strong>${r.name}</strong><br>
+          <strong>${r.name}</strong>
           <ul>${r.exercises.map(e => `<li>${e}</li>`).join('')}</ul>
-          <button class="small-btn" onclick="deleteRoutine(${index})" style="background-color:#e74c3c;">🗑 Eliminar</button>
+          <button onclick="editRoutine(${i})" style="background-color:#3498db;">✏️ Editar</button>
+          <button onclick="deleteRoutine(${i})" style="background-color:#e74c3c;">Eliminar</button>
         `;
         list.appendChild(div);
       });
-
       updateRoutineSelector();
+    }
+
+    function editRoutine(index) {
+      const routines = JSON.parse(localStorage.getItem('routines') || '[]');
+      const routine = routines[index];
+      if (!routine) return;
+      document.getElementById('routineName').value = routine.name;
+      document.getElementById('routineExercisesList').innerHTML = '';
+      routine.exercises.forEach(name => {
+        const div = document.createElement('div');
+        div.innerHTML = `<input type="text" class="routineExerciseInput" value="${name}" placeholder="Nombre del ejercicio">`;
+        document.getElementById('routineExercisesList').appendChild(div);
+      });
+      editingRoutineIndex = index;
+      showSection('routines');
     }
 
     function deleteRoutine(index) {
       const routines = JSON.parse(localStorage.getItem('routines') || '[]');
-      if (confirm(`¿Eliminar rutina "${routines[index].name}"?`)) {
-        routines.splice(index, 1);
-        localStorage.setItem('routines', JSON.stringify(routines));
-        loadRoutines();
-      }
+      routines.splice(index, 1);
+      localStorage.setItem('routines', JSON.stringify(routines));
+      loadSavedRoutines();
     }
 
     function updateRoutineSelector() {
       const routines = JSON.parse(localStorage.getItem('routines') || '[]');
       const selector = document.getElementById('routineSelector');
-      selector.innerHTML = '<option value="">Sin rutina</option>';
+      selector.innerHTML = '<option value="">📅 Seleccionar rutina semanal</option>';
       routines.forEach((r, i) => {
-        const option = document.createElement('option');
-        option.value = i;
-        option.textContent = r.name;
-        selector.appendChild(option);
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = r.name;
+        selector.appendChild(opt);
       });
     }
 
-    function applySelectedRoutine() {
-      const routines = JSON.parse(localStorage.getItem('routines') || '[]');
-      const index = document.getElementById('routineSelector').value;
-      const exerciseList = document.getElementById('exerciseList');
-      exerciseList.innerHTML = '';
-
-      if (index === '') return;
-
-      const routine = routines[index];
-      routine.exercises.forEach(exName => {
-        addExercise(exName);
-      });
+    updateRoutineSelector();
+  
+    function exportData() {
+  const data = {
+    routines: JSON.parse(localStorage.getItem('routines') || '[]'),
+    history: JSON.parse(localStorage.getItem('history') || '[]')
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const date = new Date().toISOString().split('T')[0];
+  a.download = `gymtracker_backup_${date}.json`;
+      a.click();
     }
 
-    // Carga inicial de rutinas al abrir app
-    loadRoutines();
-  </script>
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.routines && data.history) {
+            localStorage.setItem('routines', JSON.stringify(data.routines));
+            localStorage.setItem('history', JSON.stringify(data.history));
+            alert("Datos importados correctamente.");
+            updateRoutineSelector();
+            loadSavedRoutines();
+            loadHistory();
+          } else {
+            alert("Archivo inválido.");
+          }
+        } catch (err) {
+          alert("Error al leer el archivo.");
+        }
+      };
+      reader.readAsText(file);
+    }
+    
+function showStats() {
+  const history = JSON.parse(localStorage.getItem('history') || '[]');
+  if (!history.length) return alert("No hay datos para analizar.");
+
+  let totalEntrenos = history.length;
+  let totalPeso = 0;
+  let freq = {};
+
+  history.forEach(h => {
+    h.exercises.forEach(ex => {
+      freq[ex.name] = (freq[ex.name] || 0) + 1;
+      ex.series.forEach(s => {
+        totalPeso += Number(s.weight || 0);
+      });
+    });
+  });
+
+  let maxEj = Object.keys(freq).reduce((a, b) => freq[a] > freq[b] ? a : b);
+
+  const statsHtml = `
+    <div style="border:1px solid #ccc; padding:1rem; margin:1rem 0; background:#fff; border-radius:8px;">
+      <strong>📈 Estadísticas:</strong><br>
+      Total de entrenamientos: ${totalEntrenos}<br>
+      Ejercicio más frecuente: ${maxEj}<br>
+      Peso total levantado: ${totalPeso} kg
+    </div>
+  `;
+
+  document.getElementById('statsContainer').innerHTML = statsHtml;
+}
+
+
+</script>
 </body>
 </html>
