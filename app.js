@@ -466,14 +466,13 @@ addExercise = function(name = '') {
 
 // Modo oscuro: toggle y persistencia
 const toggleThemeBtn = document.getElementById('toggleThemeBtn');
-toggleThemeBtn.addEventListener('click', () => {
-  document.body.classList.toggle('dark-mode');
-  if (document.body.classList.contains('dark-mode')) {
-    localStorage.setItem('theme', 'dark');
-  } else {
-    localStorage.setItem('theme', 'light');
-  }
-});
+if (toggleThemeBtn) {
+  toggleThemeBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+  });
+}
+
 
 // Cargar preferencia guardada
 if(localStorage.getItem('theme') === 'dark') {
