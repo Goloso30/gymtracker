@@ -1,0 +1,206 @@
+/* Reset y base */
+* {
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9fafb;
+  margin: 0;
+  padding: 1rem;
+  color: #222;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Encabezados */
+h1, h2, h3 {
+  text-align: center;
+  margin: 1.5rem 0 1rem 0;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #1f2937;
+}
+h1 {
+  font-size: 2.5rem;
+}
+h2 {
+  font-size: 1.75rem;
+}
+h3 {
+  font-size: 1.25rem;
+}
+
+/* Secciones */
+.section {
+  display: none;
+  max-width: 640px;
+  margin: 2rem auto;
+  padding: 1.8rem 2rem;
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.visible {
+  display: block;
+  animation: fadeInUp 0.5s ease forwards;
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Botones */
+button {
+  width: 100%;
+  padding: 1.05rem 1.25rem;
+  margin: 0.6rem 0;
+  background-color: #10b981;
+  color: white;
+  font-size: 1.15rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+button:hover {
+  background-color: #059669;
+  box-shadow: 0 6px 12px rgba(5, 150, 105, 0.5);
+}
+button.secondary {
+  background-color: #6b7280;
+  box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
+}
+button.secondary:hover {
+  background-color: #4b5563;
+  box-shadow: 0 6px 12px rgba(75, 85, 99, 0.5);
+}
+
+/* Inputs, textarea, select */
+input, textarea, select {
+  width: 100%;
+  padding: 1rem;
+  margin: 0.5rem 0 1.5rem 0;
+  font-size: 1rem;
+  border: 2px solid #d1d5db;
+  border-radius: 12px;
+  background-color: #fefefe;
+  transition: border-color 0.3s ease;
+  font-weight: 500;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: #10b981;
+  outline: none;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+/* Ejercicios y series */
+.exercise-block {
+  background: #f9fafb;
+  border: 1px solid #d1d5db;
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 1.8rem;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+}
+.series-entry {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.8rem;
+}
+.series-entry input {
+  flex: 1;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  padding: 0.7rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Notas */
+.note {
+  font-size: 0.9rem;
+  color: #4b5563;
+  margin-bottom: 0.7rem;
+}
+
+/* Cronómetro flotante */
+#floatingChrono {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background: #10b981;
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.5);
+  z-index: 10000;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: 700;
+  font-size: 1.3rem;
+  width: 140px;
+}
+#floatingChronoButtons {
+  margin-top: 0.7rem;
+  display: flex;
+  gap: 0.6rem;
+  width: 100%;
+}
+#floatingChronoButtons button {
+  flex: 1;
+  padding: 0.45rem 0;
+  font-size: 1.15rem;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: 800;
+}
+#floatingChronoButtons button.pause {
+  background-color: #047857;
+  box-shadow: 0 6px 16px rgba(4, 120, 87, 0.6);
+  color: white;
+}
+#floatingChronoButtons button.reset {
+  background-color: #b91c1c;
+  box-shadow: 0 6px 16px rgba(185, 28, 28, 0.6);
+  color: white;
+}
+
+/* Modo oscuro */
+body.dark-mode {
+  background-color: #111827;
+  color: #e5e7eb;
+}
+body.dark-mode .section {
+  background-color: #1f2937;
+  box-shadow: 0 8px 24px rgba(255,255,255,0.08);
+}
+body.dark-mode button {
+  background-color: #059669;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.5);
+}
+body.dark-mode button.secondary {
+  background-color: #374151;
+  box-shadow: 0 4px 12px rgba(55,65,81,0.5);
+}
+body.dark-mode input, body.dark-mode textarea, body.dark-mode select {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+/* Transiciones */
+body, .section, button, input, textarea, select {
+  transition: background-color 0.35s ease, color 0.35s ease;
+}
