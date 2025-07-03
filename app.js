@@ -1,13 +1,21 @@
 let editingRoutineIndex = null;
+let editingWorkoutIndex = null;
+let editingWorkoutDate = null;
+
+
 function showSection(id) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
   document.getElementById(id).classList.add('visible');
-  if (id === 'new') {
+
+  // Solo mostrar la fecha actual si NO estás editando
+  if (id === 'new' && editingWorkoutIndex === null) {
     document.getElementById('currentDate').innerText = new Date().toLocaleString();
   }
+
   if (id === 'history') loadHistory();
   if (id === 'routines') loadSavedRoutines();
 }
+
 
 function setRoutineDay(index) {
   const routines = JSON.parse(localStorage.getItem('routines') || '[]');
@@ -15,13 +23,13 @@ function setRoutineDay(index) {
   if (!routine) return;
   showSection('new');
   const history = JSON.parse(localStorage.getItem('history') || '[]').reverse();
-  const lastMatch = history.find(h => h.exercises.some(e => routine.exercises.includes(e.name)));
+  const lastMatch = history.find(h => h.exercises.some(e => routine.exercises.some(rex => normalize(rex) === normalize(e.name))));
   document.getElementById('exerciseList').innerHTML = '';
   routine.exercises.forEach(exName => {
     addExercise(exName);
     const block = document.getElementById('exerciseList').lastElementChild;
     if (lastMatch) {
-      const found = lastMatch.exercises.find(e => e.name === exName);
+      const found = lastMatch.exercises.find(e => normalize(e.name) === normalize(exName));
       if (found) {
         found.series.forEach(s => {
           const btn = block.querySelector('button');
@@ -34,6 +42,7 @@ function setRoutineDay(index) {
     }
   });
 }
+
 
 function addExercise(name = '') {
   const id = 'note_' + Math.random().toString(36).substring(2, 9);
@@ -100,24 +109,62 @@ function showLastInfo(input, targetId) {
 
 function saveWorkout() {
   const notes = document.getElementById('notesInput').value;
-  const date = new Date().toISOString();
+  const date = editingWorkoutIndex !== null && editingWorkoutDate ? editingWorkoutDate : new Date().toISOString();
   const exercises = [];
+  let valid = true;
+
   document.querySelectorAll('.exercise-block').forEach(exBlock => {
-    const name = exBlock.querySelector('.exerciseName').value;
+    const name = exBlock.querySelector('.exerciseName').value.trim();
+    if (!name) {
+      alert("Todos los ejercicios deben tener un nombre.");
+      valid = false;
+      return;
+    }
     const reps = exBlock.querySelectorAll('.reps');
     const weights = exBlock.querySelectorAll('.weight');
-    const series = Array.from(reps).map((r, i) => ({
-      reps: r.value, weight: weights[i].value
-    }));
+    const series = [];
+    for(let i = 0; i < reps.length; i++) {
+      const rep = parseInt(reps[i].value);
+      const weight = parseFloat(weights[i].value);
+      if (isNaN(rep) || rep <= 0 || isNaN(weight) || weight < 0) {
+        alert("Las repeticiones y pesos deben ser números positivos.");
+        valid = false;
+        return;
+      }
+      series.push({ reps: rep, weight: weight });
+    }
     exercises.push({ name, series });
   });
+
+  if (!valid) return;
+
   const workout = { date, notes, exercises };
   const history = JSON.parse(localStorage.getItem('history') || '[]');
-  history.push(workout);
+
+  if (editingWorkoutIndex !== null) {
+    history[editingWorkoutIndex] = workout;
+    editingWorkoutIndex = null;
+    editingWorkoutDate = null;
+  } else {
+    history.push(workout);
+  }
   localStorage.setItem('history', JSON.stringify(history));
   alert("Entreno guardado");
+  clearNewWorkoutForm();
   showSection('home');
+  loadHistory();
 }
+
+
+function clearNewWorkoutForm(){
+  document.getElementById('notesInput').value = '';
+  document.getElementById('exerciseList').innerHTML = '';
+  resetTimer();
+  editingWorkoutIndex = null;
+  editingWorkoutDate = null;
+}
+
+
 
 function repeatLastWorkout() {
   const history = JSON.parse(localStorage.getItem('history') || '[]');
@@ -434,7 +481,7 @@ if(localStorage.getItem('theme') === 'dark') {
 }
 
 // Mejoras validación y edición en saveWorkout y cargar entreno
-let editingWorkoutIndex = null;
+
 
 function saveWorkout() {
   const notes = document.getElementById('notesInput').value;
@@ -480,19 +527,15 @@ function saveWorkout() {
   loadHistory();
 }
 
-function clearNewWorkoutForm(){
-  document.getElementById('notesInput').value = '';
-  document.getElementById('exerciseList').innerHTML = '';
-  // reset timer if you want
-  resetTimer();
-}
+
 
 // Cargar entreno para editar desde historial
-function editWorkout(index){
+function editWorkout(index) {
   const history = JSON.parse(localStorage.getItem('history') || '[]');
   const workout = history[index];
-  if(!workout) return;
+  if (!workout) return;
   editingWorkoutIndex = index;
+  editingWorkoutDate = workout.date; // Guardamos la fecha original
   showSection('new');
   document.getElementById('notesInput').value = workout.notes || '';
   document.getElementById('exerciseList').innerHTML = '';
@@ -508,6 +551,8 @@ function editWorkout(index){
     });
   });
 }
+
+
 
 // Modificar loadHistory para añadir botón Editar
 function loadHistory() {
