@@ -386,16 +386,7 @@ function attachAutocomplete(input) {
   });
   input.setAttribute('list', 'exerciseSuggestions');
 
-  input.addEventListener('blur', () => {
-    const val = normalize(input.value);
-    const match = suggestions.find(s => s.includes(val));
-    if (match && match !== val) {
-      if (confirm(`¿Querías decir "${match}"?`)) {
-        input.value = match;
-        input.dispatchEvent(new Event('input'));
-      }
-    }
-  });
+
 }
 
 // ⏎ REEMPLAZA addExercise para añadir autocompletado
