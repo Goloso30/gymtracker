@@ -61,11 +61,12 @@ function addSerie(btn) {
 }
 
 function showLastInfo(input, targetId) {
-  const name = input.value.trim().toLowerCase();
+  const nameNormalized = normalize(input.value);
   const history = JSON.parse(localStorage.getItem('history') || '[]').reverse();
   const div = document.getElementById(targetId);
+
   for (const w of history) {
-    const match = w.exercises.find(e => e.name.trim().toLowerCase() === name);
+    const match = w.exercises.find(e => normalize(e.name) === nameNormalized);
     if (match) {
       const reps = match.series.map(s => `${s.reps}x${s.weight}kg`).join(', ');
       let improvementNote = '';
@@ -94,6 +95,7 @@ function showLastInfo(input, targetId) {
   }
   div.innerText = "";
 }
+
 
 
 function saveWorkout() {
@@ -363,8 +365,13 @@ function formatTime(s) {
 
 
 function normalize(str) {
-  return str.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/\s+/g, " ").trim();
+  return str.toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
+
 
 function getExerciseSuggestions() {
   const history = JSON.parse(localStorage.getItem('history') || '[]');
